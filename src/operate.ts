@@ -1,14 +1,13 @@
-import { Next } from './observer';
-import { Subscriber } from './subscriber';
+import { Next, Observer } from './observer';
 
 type OperateInit<T = any, R = any> = (value: T, Next: Next<R>) => void;
 
-export type Operate<T = any, R = any> = (source: Subscriber<T>) => Subscriber<R>;
+export type Operate<T = any, R = any> = (source: Observer<T>) => Observer<R>;
 
 export const operate =
 	<T, R>(init: OperateInit<T, R>): Operate<T, R> =>
 	(source) =>
-		source.subscribe((value, subscriber) => init(value, subscriber.next.bind(subscriber)));
+		new Observer((next) => source.subscribe((value) => init(value, next)));
 
 export const map = <T, R>(project: (value: T, index: number) => R) =>
 	operate<T, R>((value, next) => {
@@ -34,5 +33,5 @@ export const tap = <T>(tap: (value: T, index: number) => any) =>
 
 export const pipe =
 	(...operates: Operate[]) =>
-	<T>(source: Subscriber<T>) =>
+	<T>(source: Observer<T>) =>
 		operates.reduce((prev, operate) => operate(prev), source);
